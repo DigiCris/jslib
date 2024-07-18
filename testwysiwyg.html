@@ -1,0 +1,90 @@
+<html><head>
+    <title>Elemento Arrastrable</title>
+    <style>
+        #my-element {
+        cursor: move;
+        transform: translate3d(91px, 21px, 0px);
+        }
+        #my-element2 {
+        cursor: move;
+        transform: translate3d(312px, -3px, 0px);
+        border: 2px solid black;
+        width: fit-content;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="my-element" >
+      Este es un elemento que puedes arrastrar por toda la página.
+    </div>
+  
+    <div id="my-element2" >
+      Cambio texto.
+    </div>
+  
+    
+    <script>
+
+function makeDraggable(elementId) {
+      // Obtener el elemento a convertir en arrastrable
+      const element = document.getElementById(elementId);
+      element.style.cursor = 'move';
+      //element.classList.add('draggable');
+
+      // Variables para almacenar la posición del mouse
+      let currentX;
+      let currentY;
+      let initialX;
+      let initialY;
+      let xOffset = 0;
+      let yOffset = 0;
+      let active = false;
+
+      element.addEventListener('mousedown', dragStart);
+      element.addEventListener('mouseup', dragEnd);
+      element.addEventListener('mousemove', drag);
+
+      function dragStart(e) {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+
+        if (e.target === element) {
+          active = true;
+        }
+      }
+
+      function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+
+        active = false;
+      }
+
+      function drag(e) {
+        if (active) {
+          e.preventDefault();
+
+          if (e.target === element) {
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, element);
+          }
+        }
+      }
+
+      function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+      }
+    }
+
+    // Ejemplo de uso
+    //makeDraggable('my-element');
+
+
+    </script>
+  
+  </body></html>

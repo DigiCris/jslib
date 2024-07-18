@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Elemento Arrastrable</title>
+  <style>
+    /*
+    .draggable {
+      position: absolute;
+      cursor: move;
+      z-index: 9;
+    }
+      */
+      #pantalla {
+        width: 300px;
+        height: 300px;
+        border: 2px solid black;
+        position: absolute;
+        top: 300px;
+        left: 300px;
+      }
+  </style>
+</head>
+<body id="body">
+    <div id="pantalla">
+
+    </div>
+  <div id="my-element">
+    Hola.
+  </div>
+
+  <div id="my-element2">
+    Chau.
+  </div>
+
+  <script>
+    function makeDraggable(elementId) {
+        // Obtener el elemento a convertir en arrastrable
+        const element = document.getElementById(elementId);
+        element.style.cursor = 'move';
+        element.style.position = "absolute"
+        //element.classList.add('draggable');
+
+        // Variables para almacenar la posición del mouse
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        let active = false;
+
+        let zIndex = 0;
+
+        element.addEventListener('mousedown', dragStart);
+        element.addEventListener('mouseup', dragEnd);
+        element.addEventListener('mousemove', drag);
+
+        function dragStart(e) {
+            zIndex = this.style.zIndex ;
+            this.style.zIndex = Number(zIndex) + 100000;
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+
+        if (e.target === element) {
+            active = true;
+        }
+        }
+
+        function dragEnd(e) {
+            console.log( trackMousePosition(this.id) )
+            idtop = trackMousePosition(this.id);
+            if(idtop!="" && window.getEventListeners(document.getElementById(idtop))?.mousemove?.[0]?.listener?.toString()?.includes("drag(e)") || false == false) {
+                aux = this;
+                document.getElementById(this.id).remove();
+                addHTML(aux.outerHTML, "#"+idtop, flag = "a");
+                aux.style.zIndex = Number( document.querySelector("#"+idtop).style.zIndex ) +1;
+                makeDraggable(aux.id)
+            }else {
+                this.style.zIndex = zIndex;
+            }
+            
+            //
+            //console.log("termina")
+        initialX = currentX;
+        initialY = currentY;
+
+        active = false;
+        }
+
+        function drag(e) {
+        if (active) {
+            e.preventDefault();
+
+            if (e.target === element) {
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, element);
+            }
+        }
+        }
+
+        function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+
+    }
+
+    function hasBeenMadeDraggable(elementId) {
+        // Obtener el elemento a convertir en arrastrable
+        const element = document.getElementById(elementId);
+        return element.hasEventListener('mousedown', dragStart);
+    }
+    // Ejemplo de uso
+    makeDraggable('my-element');
+    makeDraggable('my-element2')
+    //makeDraggable('pantalla');
+
+
+function trackMousePosition(id) {
+    const elementsUnderMouse = document.elementsFromPoint(event.clientX, event.clientY);
+    for (const element of elementsUnderMouse) {
+        if(id != element.id) {
+            const sortedElements = elementsUnderMouse.sort((a, b) => b.style.zIndex - a.style.zIndex);
+            const elementIds = sortedElements.map(el => el.id);
+            const elementIndex = elementsUnderMouse.indexOf(element);
+            return(elementIds[elementIndex])
+            console.log(elementIds[elementIndex]);
+        }
+    }
+}
+
+
+function addHTML(what, where, flag = "w") {
+    console.log("where= "+where)
+    console.log("what= "+what)
+    switch (flag) {
+        case "w":
+        case "W":
+            document.querySelector(where).innerHTML = what;
+            break;
+        case "a":
+        case "A":
+            document.querySelector(where).innerHTML += what;
+            break;
+        default:
+            console.error("El valor de 'flag' debe ser 'w', 'W', 'a' o 'A'.");
+    }
+}
+
+
+
+trackMousePosition();
+  </script>
+</body>
+</html>

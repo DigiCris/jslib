@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./lib.js"></script>
+</head>
+<body>
+
+    <div id="root"></div>
+
+
+    <script>
+        addHTML("<p>Hola</p>", "#root", "w");
+        var jso = 10;
+        async function get(){
+            headers = {
+                "Content-Type": "application/json",
+                "x-api-key": ""
+            }
+
+            jsonInfo = {
+                "title": 'Mi nuevo post',
+                "body": 'Este es el contenido de mi nuevo post de prueba.',
+                "userId": 1
+            }
+
+            url= "https://jsonplaceholder.typicode.com/posts"
+            jso = await readJson("https://api.tatum.io/v3/polygon/address/xpub6E9Bkxc4DjXbDxQLcR6ynktutQ1kk2ygwwbDzfegeTaziEn7FCcTc3VZJhPEkoKEjFcootda95akQjhtb6oBFzxMFKUhf79c9Zs69cx1ahM/2",headers)
+            
+            addHTML("<p>"+jso+"</p>", "#root", "w");
+        }
+        get();
+    </script>
+
+</body>
+</html>
