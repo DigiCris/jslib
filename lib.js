@@ -119,12 +119,18 @@ async function writeJson(url, headers, jsonInfo) {
 /*
 Hacer que cualquier elemento se convierta en arrastrable
 Funcionando
-*/
 
+Al pasarle el id del un elemento este se convierte en dragable
+
+makeDraggable('my-element-id');
+makeDraggable('my-element2-id')
+makeDraggable('pantalla-id');
+*/
 function makeDraggable(elementId) {
     // Obtener el elemento a convertir en arrastrable
     const element = document.getElementById(elementId);
     element.style.cursor = 'move';
+    element.style.position = "absolute"
     //element.classList.add('draggable');
 
     // Variables para almacenar la posición del mouse
@@ -136,92 +142,224 @@ function makeDraggable(elementId) {
     let yOffset = 0;
     let active = false;
 
+    let zIndex = 0;
+
     element.addEventListener('mousedown', dragStart);
     element.addEventListener('mouseup', dragEnd);
     element.addEventListener('mousemove', drag);
 
     function dragStart(e) {
-    initialX = e.clientX - xOffset;
-    initialY = e.clientY - yOffset;
+        zIndex = this.style.zIndex ;
+        this.style.zIndex = Number(zIndex) + 100000;
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
 
-    if (e.target === element) {
-        active = true;
-    }
+        if (e.target === element) {
+            active = true;
+        }
     }
 
     function dragEnd(e) {
-    initialX = currentX;
-    initialY = currentY;
+        console.log( trackMousePosition(this.id) )
+        idtop = trackMousePosition(this.id);
+        if(idtop!="") {
+            this.style.zIndex = Number( document.querySelector("#"+idtop).style.zIndex ) +1;
+        }else {
+            this.style.zIndex = zIndex;
+        }
+        //console.log("termina")
+        initialX = currentX;
+        initialY = currentY;
 
-    active = false;
+        active = false;
     }
 
     function drag(e) {
-    if (active) {
-        e.preventDefault();
+        if (active) {
+            e.preventDefault();
 
-        if (e.target === element) {
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
+            if (e.target === element) {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
 
-        xOffset = currentX;
-        yOffset = currentY;
+                xOffset = currentX;
+                yOffset = currentY;
 
-        setTranslate(currentX, currentY, element);
+                setTranslate(currentX, currentY, element);
+            }
         }
-    }
     }
 
     function setTranslate(xPos, yPos, el) {
-    el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
     }
+
+    function trackMousePosition(id) {
+        const elementsUnderMouse = document.elementsFromPoint(event.clientX, event.clientY);
+        for (const element of elementsUnderMouse) {
+            if(id != element.id) {
+                const sortedElements = elementsUnderMouse.sort((a, b) => b.style.zIndex - a.style.zIndex);
+                const elementIds = sortedElements.map(el => el.id);
+                const elementIndex = elementsUnderMouse.indexOf(element);
+                return(elementIds[elementIndex])
+                console.log(elementIds[elementIndex]);
+            }
+        }
+    }
+
+
 }
 
 
 
 /*
-Extraer html y css de la pagina.
+Extraer html, css y js de la pagina. Puede usarse despues de los drags y cambiar css en la pagina y html
+
+const { html, css, js } = getPageSnapshot();
+console.log('HTML:\n', html);
+console.log('CSS:\n', css);
+console.log('JavaScript:\n', js);
 */
 function getPageSnapshot() {
     // Obtener el HTML actual de la página
     let html = `\`\`\`html
-  ${document.documentElement.outerHTML}
-  \`\`\``;
-  
+    ${document.documentElement.outerHTML}
+    \`\`\``;
+
     // Generar el CSS
     let css = `\`\`\`css
-  `;
+    `;
+    // Generar el JavaScript
+    let js = `\`\`\`javascript
+    `;
+
     // Extraer el CSS inline del HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html.replace(/```html/g, '').replace(/```/g, '');
     const inlineStyles = tempDiv.querySelectorAll('[id]');
     inlineStyles.forEach(element => {
-      css += `#${element.id} {\n`;
-      const styles = element.getAttribute('style').split(';');
-      styles.forEach(style => {
+        css += `#${element.id} {\n`;
+        const styles = element.getAttribute('style').split(';');
+        styles.forEach(style => {
         if (style.trim() !== '') {
-          const [property, value] = style.split(':');
-          css += `  ${property.trim()}: ${value.trim()};\n`;
+            const [property, value] = style.split(':');
+            css += `  ${property.trim()}: ${value.trim()};\n`;
         }
-      });
-      css += `}\n`;
+        });
+        css += `}\n`;
     });
-  
+
+    // Extraer el JavaScript inline del HTML
+    const inlineScripts = tempDiv.querySelectorAll('script');
+    inlineScripts.forEach(script => {
+        if (script.textContent.trim() !== '') {
+            js += script.textContent.trim() + '\n';
+        }
+    });
+
     // Obtener el CSS externo
     for (let i = 0; i < document.styleSheets.length; i++) {
-      const stylesheet = document.styleSheets[i];
-      if (stylesheet.cssRules) {
-        for (let j = 0; j < stylesheet.cssRules.length; j++) {
-          css += stylesheet.cssRules[j].cssText + '\n';
+        const stylesheet = document.styleSheets[i];
+        if (stylesheet.cssRules) {
+            for (let j = 0; j < stylesheet.cssRules.length; j++) {
+                css += stylesheet.cssRules[j].cssText + '\n';
+            }
         }
-      }
     }
     css += `\`\`\``;
-  
-    // Eliminar el CSS inline del HTML
+
+    // Eliminar el CSS y JavaScript inline del HTML
     html = html.replace(/<[^>]+style="[^"]*"[^>]*>/g, (match) => {
-      return match.replace(/style="[^"]*"/g, '');
+        return match.replace(/style="[^"]*"/g, '');
     });
-  
-    return { html, css };
-  }
+    html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/g, '');
+
+    return { html, css, js };
+}
+
+
+
+/**
+ * Ejemplo de uso
+ * 
+ * const modalHtml = `
+    <h2>Mi Modal</h2>
+    <p>Este es el contenido de mi modal.</p>
+`;
+
+const modalCss = `
+    .modal h2 {
+        color: blue;
+    }
+    .modal p {
+        font-size: 16px;
+    }
+`;
+
+openModal(modalHtml, modalCss, 400, 300, 100, 200, 'my-modal');
+
+// Cerrar el modal
+//closeModal('my-modal');
+ * 
+ * Función para abrir un modal personalizado
+ * @param {string} modalHtml - El HTML del contenido del modal
+ * @param {string} modalCss - El CSS para el estilo del modal
+ * @param {number} width - El ancho del modal
+ * @param {number} height - El alto del modal
+ * @param {number} top - La posición vertical del modal
+ * @param {number} left - La posición horizontal del modal
+ * @param {string} modalId - El ID del modal
+ */
+function openModal(modalHtml, modalCss, width, height, top, left, modalId) {
+    // Crear el elemento del modal
+    const modal = document.createElement('div');
+    modal.id = modalId;
+    modal.classList.add('modal');
+
+    // Establecer el estilo del modal
+    modal.style.position = 'fixed';
+    modal.style.top = `${top}px`;
+    modal.style.left = `${left}px`;
+    modal.style.width = `${width}px`;
+    modal.style.height = `${height}px`;
+    modal.style.zIndex = '9999';
+    modal.style.backgroundColor = 'white';
+    modal.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+    modal.style.overflow = 'auto';
+
+    // Agregar el HTML y CSS del modal
+    modal.innerHTML = modalHtml;
+    const style = document.createElement('style');
+    style.textContent = modalCss;
+    modal.appendChild(style);
+
+    // Agregar un fondo de pantalla oscuro y borroso
+    const overlay = document.createElement('div');
+    overlay.classList.add('modal-overlay');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    overlay.style.backdropFilter = 'blur(5px)';
+    overlay.style.zIndex = '9998';
+
+    // Agregar el modal y el fondo al documento
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+}
+
+/**
+ * Función para cerrar un modal
+ * @param {string} modalId - El ID del modal a cerrar
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const overlay = document.querySelector('.modal-overlay');
+
+    if (modal && overlay) {
+        document.body.removeChild(modal);
+        document.body.removeChild(overlay);
+    }
+}
